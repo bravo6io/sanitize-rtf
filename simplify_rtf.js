@@ -65,13 +65,96 @@ function decodeUnicode(n) {
 
 // Reduce an RTF fragment to plain ASCII text, removing all RTF control codes.
 function sanitizeRtfFragment(fragment) {
-  // Reduce an RTF fragment to plain ASCII text, removing all RTF control codes.
-  let s = fragment;
-  s = s.replace(/\\u(-?\d+)\??/g, (_, n) => decodeUnicode(parseInt(n, 10)));
-  s = s.replace(/\\'([0-9a-fA-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
-  s = s.replace(/\\[a-zA-Z]+-?\d* ?/g, '');
-  s = s.replace(/\\[^a-zA-Z]/g, '');
-  s = s.replace(/[{}]/g, '');
+  // Reduce an RTF fragment to plain ASCII text, preserving bold spans.
+  let out = '';
+  let i = 0;
+  let bold = false;
+  const stack = [];
+
+  while (i < fragment.length) {
+    const ch = fragment[i];
+    if (ch === '{') {
+      stack.push(bold);
+      i++;
+      continue;
+    }
+    if (ch === '}') {
+      const prev = stack.length ? stack.pop() : false;
+      if (prev !== bold) {
+        out += prev ? '[[B_ON]]' : '[[B_OFF]]';
+        bold = prev;
+      }
+      i++;
+      continue;
+    }
+    if (ch === '\\') {
+      const next = fragment[i + 1];
+      if (next === '\\' || next === '{' || next === '}') {
+        out += next;
+        i += 2;
+        continue;
+      }
+      if (next === 'u') {
+        i += 2;
+        let sign = 1;
+        if (fragment[i] === '-') {
+          sign = -1;
+          i++;
+        }
+        let num = '';
+        while (i < fragment.length && /[0-9]/.test(fragment[i])) {
+          num += fragment[i++];
+        }
+        if (num) {
+          const code = sign * parseInt(num, 10);
+          out += decodeUnicode(code);
+        }
+        if (fragment[i] === '?') i++;
+        if (fragment[i] === ' ') i++;
+        continue;
+      }
+      if (next === '\'') {
+        const hex = fragment.slice(i + 2, i + 4);
+        if (/^[0-9a-fA-F]{2}$/.test(hex)) {
+          out += String.fromCharCode(parseInt(hex, 16));
+          i += 4;
+          continue;
+        }
+      }
+      if (/[a-zA-Z]/.test(next)) {
+        i += 1;
+        let word = '';
+        while (i < fragment.length && /[a-zA-Z]/.test(fragment[i])) {
+          word += fragment[i++];
+        }
+        let sign = 1;
+        if (fragment[i] === '-') {
+          sign = -1;
+          i++;
+        }
+        let num = '';
+        while (i < fragment.length && /[0-9]/.test(fragment[i])) {
+          num += fragment[i++];
+        }
+        const param = num ? sign * parseInt(num, 10) : null;
+        if (word.toLowerCase() === 'b') {
+          const nextBold = param === 0 ? false : true;
+          if (nextBold !== bold) {
+            out += nextBold ? '[[B_ON]]' : '[[B_OFF]]';
+            bold = nextBold;
+          }
+        }
+        if (fragment[i] === ' ') i++;
+        continue;
+      }
+      i += 2;
+      continue;
+    }
+    out += ch;
+    i++;
+  }
+
+  let s = out;
   s = s.replace(/[\n\r\t]+/g, '');
   s = s.replace(/[^\x20-\x7E]/g, '');
   s = s.replace(/[ ]{2,}/g, ' ');
@@ -181,6 +264,16 @@ function extractEntriesFromRtf(rtf) {
     return '';
   }
 
+  function boldStateAfterRtf(rtf) {
+    let on = false;
+    const re = /\\b0\b|\\b\b/gi;
+    let m;
+    while ((m = re.exec(rtf)) !== null) {
+      on = m[0].toLowerCase() === '\\b';
+    }
+    return on;
+  }
+
   function removeListtextGroups(s) {
     let out = '';
     let i = 0;
@@ -231,7 +324,9 @@ function extractEntriesFromRtf(rtf) {
     const labelInfo = getListLabel(listtextGroup);
     if (labelInfo) {
       const label = labelInfo.label;
-      const bodyRtf = removeListtextGroups(contentPara);
+      const boldOn = boldStateAfterRtf(listtextGroup);
+      let bodyRtf = removeListtextGroups(contentPara);
+      if (boldOn) bodyRtf = '[[B_OFF]] ' + bodyRtf;
       const body = sanitizeRtfFragment(bodyRtf);
       if (body) entries.push({ type: 'list', label, body, listType: labelInfo.type });
       continue;
@@ -245,9 +340,22 @@ function extractEntriesFromRtf(rtf) {
 
 // Escape text for safe inclusion in RTF output.
 function escapeRtfText(s) {
-  let out = s.replace(/([\\{}])/g, '\\$1');
-  out = out.replace(/[^\x00-\x7F]/g, '');
-  out = out.replace(/[ ]{2,}/g, ' ').trim();
+  let out = s.replace(/\[\[B_ON\]\]/g, '__RTF_B_ON__'); // Protect bold-on markers during escaping.
+  out = out.replace(/\[\[B_OFF\]\]/g, '__RTF_B_OFF__'); // Protect bold-off markers during escaping.
+  out = out.replace(/([\\{}])/g, '\\$1'); // Escape RTF control chars.
+  out = out.replace(/[^\x00-\x7F]/g, ''); // Strip non-ASCII to keep output simple.
+  out = out.replace(/[ ]{2,}/g, ' ').trim(); // Normalize whitespace before re-inserting bold.
+  out = out.replace(/__RTF_B_ON__/g, '\\b '); // Re-insert bold-on.
+  out = out.replace(/__RTF_B_OFF__/g, '\\b0 '); // Re-insert bold-off.
+  out = out.replace(/\\b0\s+/g, '\\b0 '); // Ensure one space after bold-off control word.
+  out = out.replace(/\\b\s+/g, '\\b '); // Ensure one space after bold-on control word.
+  out = out.replace(/\\b(?!0)([^ ])/g, '\\b $1'); // Add space if bold-on is jammed into text.
+  out = out.replace(/\\b0([^ ])/g, '\\b0 $1'); // Add space if bold-off is jammed into text.
+  out = out.replace(/\\b0(?=[A-Za-z0-9])/g, '\\b0 '); // Insert space before alphanumerics after bold-off.
+  out = out.replace(/\\b(?!0)(?=[A-Za-z0-9])/g, '\\b '); // Insert space before alphanumerics after bold-on.
+  out = out.replace(/([,.;:!?])\\b0 /g, '$1 \\b0 '); // Keep a visible space after punctuation when bold ends.
+  out = out.replace(/([,.;:!?])\\b /g, '$1 \\b '); // Keep a visible space after punctuation when bold starts.
+  out = out.replace(/[ ]{2,}/g, ' ').trim(); // Final whitespace normalization.
   return out;
 }
 
