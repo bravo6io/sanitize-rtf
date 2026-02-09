@@ -11,3 +11,4 @@ style	level1_prefix	\pard\s1\li576\fi-576\tx576\jclisttab
 style	level1_label_sep	\tab 
 style	level2_prefix	\pard\s2\li1440\fi-576\tx1440\jclisttab 
 style	level2_label_sep	\tab 
+style	bullet_label	\f0\u8226?
