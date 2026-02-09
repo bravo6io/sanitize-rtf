@@ -2,6 +2,12 @@
 
 This project extracts list items from Word-generated RTF files, strips styling from the text, and re-applies a clean, consistent style defined in `styles.tsv`.
 
+## Purpose
+This repo takes `.rtf` output from text editors and simplifies it so SketchUp Layout can render lists reliably for construction document notes. SketchUp Layout’s RTF support is fragile with complex styling, and Word often injects extra formatting that causes misinterpretation. Common issues this repo avoids:
+- misaligned lists and sub-lists
+- random restarting of numbering
+- inconsistent bolding of numbering vs. text in the first line of a paragraph
+
 ## Files
 - `simplify_rtf.js`: main sanitizer/formatter (Node.js)
 - `batch_simplify_rtf.js`: batch processor for directories
