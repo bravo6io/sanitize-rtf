@@ -5,7 +5,7 @@ Extracts list items from Word-generated RTF files, strips styling from the text,
 ## Quick Start
 ## Single File
 ```bash
-node simplify_rtf.js --in word.rtf --out output.rtf --styles styles.tsv
+node simplify_rtf.js --in input.rtf --out output.rtf --styles styles.tsv
 ```
 
 Notes:
@@ -31,7 +31,7 @@ Use `--caps` to convert all sanitized text to uppercase (common in construction 
 
 Single file:
 ```bash
-node simplify_rtf.js --in word.rtf --out output.rtf --styles styles.tsv --caps
+node simplify_rtf.js --in input.rtf --out output.rtf --styles styles.tsv --caps
 ```
 
 Batch:
@@ -42,8 +42,7 @@ node batch_simplify_rtf.js --dir /path/to/rtfs --styles styles.tsv --caps
 ## Files
 - `simplify_rtf.js`: main sanitizer/formatter (Node.js)
 - `batch_simplify_rtf.js`: batch processor for directories
-- `styles.tsv`: style definitions exported from `simplified.rtf`
-- `simplified.rtf`: style reference and target formatting
+- `styles.tsv`: style definitions used to format output
 - `test_files/`: sample input files and their `*_sanitized.rtf` outputs
 
 ## Optional Global Command (bash)
@@ -100,9 +99,7 @@ source ~/.bashrc
 Replace `/path/to/your/clone` with the actual path to this repo.
 
 ## Style Source
-`styles.tsv` was generated from `simplified.rtf` and contains:
+`styles.tsv` contains:
 - Header lines (RTF preamble)
 - Prefixes for level 1 and level 2 list items
 - Label separator (`\tab`)
-
-If you update `simplified.rtf`, regenerate `styles.tsv` before running the sanitizer.
