@@ -1,5 +1,9 @@
 # Purpose
-Takes .rtf output  from a text editor and simplify the .rtf code to only what is needed for SketchUp layout to render a list properly (commonly used in General Notes in construction documents). SketchUp layout can interpret .rtf but it is rather buggy in how it does this, especially for very complex styling in a single list. Editors like Word often inject additional formatting that is uncessary and gets mis-interpreted and renders incorrectly with side effects. The most common issues include: 
-- misaligned lists and sub-lists
-- random restarting of numbering
-- incosistent bolding of numbering vs. text in the first line of a paragraph  
+Simplifies Word-generated `.rtf` files so SketchUp Layout renders lists reliably in construction document notes.
+
+# Quick Usage
+```bash
+node batch_simplify_rtf.js --dir test_files --styles styles.tsv
+```
+
+See `README.md` for full usage, setup, and file behavior details.
