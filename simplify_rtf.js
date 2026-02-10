@@ -3,19 +3,26 @@
 
 const fs = require('fs');
 
-// Usage (direct with Node.js):
-//   node simplify_rtf.js --in word.rtf --out output.rtf --styles styles.tsv
-//
-// This script:
-// - Reads styles from styles.tsv (exported from simplified.rtf)
-// - Extracts numbered/lettered list items from Word RTF
-// - Strips all styling from item bodies
-// - Emits a clean RTF using the styles.tsv prefixes
-
-// Print usage and exit with failure.
-function usage() {
-  console.error('Usage: node simplify_rtf.js --in INPUT.rtf --out OUTPUT.rtf [--styles styles.tsv] [--caps]');
-  process.exit(1);
+function usage(exitCode) {
+  const out = exitCode === 0 ? console.log : console.error;
+  out(
+    [
+      'RTF Sanitizer',
+      '',
+      'Simplifies Word-generated .rtf so SketchUp Layout renders lists reliably.',
+      '',
+      'Usage:',
+      '  node simplify_rtf.js --in INPUT.rtf --out OUTPUT.rtf [--styles styles.tsv] [--caps]',
+      '',
+      'Options:',
+      '  --in      Input .rtf file',
+      '  --out     Output .rtf file (overwritten)',
+      '  --styles  Styles TSV (default: styles.tsv)',
+      '  --caps    Convert sanitized text to uppercase',
+      '  --help    Show this help',
+    ].join('\n')
+  );
+  process.exit(exitCode);
 }
 
 // Parse CLI arguments into an options object.
@@ -27,9 +34,10 @@ function parseArgs(argv) {
     else if (a === '--out') args.out = argv[++i] || '';
     else if (a === '--styles') args.styles = argv[++i] || '';
     else if (a.toLowerCase() === '--caps') args.caps = true;
-    else usage();
+    else if (a === '--help' || a === '-h') usage(0);
+    else usage(1);
   }
-  if (!args.in || !args.out) usage();
+  if (!args.in || !args.out) usage(1);
   return args;
 }
 

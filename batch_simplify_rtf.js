@@ -5,15 +5,25 @@ const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 
-// Usage:
-//   node batch_simplify_rtf.js --dir /path/to/rtfs --styles styles.tsv
-//
-// For each .rtf file in the directory (excluding *_sanitized.rtf), this script
-// runs simplify_rtf.js and writes "_sanitized" outputs, overwriting if present.
-
-function usage() {
-  console.error('Usage: node batch_simplify_rtf.js --dir DIR [--styles styles.tsv] [--caps]');
-  process.exit(1);
+function usage(exitCode) {
+  const out = exitCode === 0 ? console.log : console.error;
+  out(
+    [
+      'RTF Sanitizer (Batch)',
+      '',
+      'Processes all .rtf files in a directory and writes *_sanitized.rtf outputs.',
+      '',
+      'Usage:',
+      '  node batch_simplify_rtf.js --dir DIR [--styles styles.tsv] [--caps]',
+      '',
+      'Options:',
+      '  --dir     Directory of .rtf files',
+      '  --styles  Styles TSV (default: styles.tsv)',
+      '  --caps    Convert sanitized text to uppercase',
+      '  --help    Show this help',
+    ].join('\n')
+  );
+  process.exit(exitCode);
 }
 
 function parseArgs(argv) {
@@ -23,9 +33,10 @@ function parseArgs(argv) {
     if (a === '--dir') args.dir = argv[++i] || '';
     else if (a === '--styles') args.styles = argv[++i] || '';
     else if (a.toLowerCase() === '--caps') args.caps = true;
-    else usage();
+    else if (a === '--help' || a === '-h') usage(0);
+    else usage(1);
   }
-  if (!args.dir) usage();
+  if (!args.dir) usage(1);
   return args;
 }
 

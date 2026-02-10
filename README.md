@@ -23,6 +23,9 @@ Behavior:
 - Writes `<original>_sanitized.rtf` next to each input.
 - Overwrites existing `_sanitized.rtf` files.
 
+## Help
+Each command supports `--help` (`-h`) to show options and usage.
+
 ## Optional All-Caps Output
 Use `--caps` to convert all sanitized text to uppercase (common in construction notes).
 
