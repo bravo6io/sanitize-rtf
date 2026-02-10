@@ -153,6 +153,7 @@ function sanitizeRtfFragment(fragment) {
     out += ch;
     i++;
   }
+  if (bold) out += '[[B_OFF]]';
 
   let s = out;
   s = s.replace(/[\n\r\t]+/g, '');
