@@ -12,16 +12,17 @@ const { spawnSync } = require('child_process');
 // runs simplify_rtf.js and writes "_sanitized" outputs, overwriting if present.
 
 function usage() {
-  console.error('Usage: node batch_simplify_rtf.js --dir DIR [--styles styles.tsv]');
+  console.error('Usage: node batch_simplify_rtf.js --dir DIR [--styles styles.tsv] [--caps]');
   process.exit(1);
 }
 
 function parseArgs(argv) {
-  const args = { dir: '', styles: 'styles.tsv' };
+  const args = { dir: '', styles: 'styles.tsv', caps: false };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--dir') args.dir = argv[++i] || '';
     else if (a === '--styles') args.styles = argv[++i] || '';
+    else if (a.toLowerCase() === '--caps') args.caps = true;
     else usage();
   }
   if (!args.dir) usage();
@@ -45,9 +46,11 @@ function outputPathFor(inputPath) {
   return path.join(dir, `${base}_sanitized${ext}`);
 }
 
-function runSimplify(inputPath, outputPath, stylesPath) {
+function runSimplify(inputPath, outputPath, stylesPath, caps) {
   const script = path.join(__dirname, 'simplify_rtf.js');
-  const result = spawnSync('node', [script, '--in', inputPath, '--out', outputPath, '--styles', stylesPath], {
+  const args = [script, '--in', inputPath, '--out', outputPath, '--styles', stylesPath];
+  if (caps) args.push('--caps');
+  const result = spawnSync('node', args, {
     stdio: 'inherit',
   });
   if (result.status !== 0) {
@@ -75,7 +78,7 @@ function main() {
 
   for (const inputPath of files) {
     const outPath = outputPathFor(inputPath);
-    runSimplify(inputPath, outPath, stylesPath);
+    runSimplify(inputPath, outPath, stylesPath, args.caps);
   }
 }
 

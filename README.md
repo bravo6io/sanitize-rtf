@@ -23,6 +23,19 @@ Behavior:
 - Writes `<original>_sanitized.rtf` next to each input.
 - Overwrites existing `_sanitized.rtf` files.
 
+## Optional All-Caps Output
+Use `--caps` to convert all sanitized text to uppercase (common in construction notes).
+
+Single file:
+```bash
+node simplify_rtf.js --in word.rtf --out output.rtf --styles styles.tsv --caps
+```
+
+Batch:
+```bash
+node batch_simplify_rtf.js --dir /path/to/rtfs --styles styles.tsv --caps
+```
+
 ## Files
 - `simplify_rtf.js`: main sanitizer/formatter (Node.js)
 - `batch_simplify_rtf.js`: batch processor for directories

@@ -14,18 +14,19 @@ const fs = require('fs');
 
 // Print usage and exit with failure.
 function usage() {
-  console.error('Usage: node simplify_rtf.js --in INPUT.rtf --out OUTPUT.rtf [--styles styles.tsv]');
+  console.error('Usage: node simplify_rtf.js --in INPUT.rtf --out OUTPUT.rtf [--styles styles.tsv] [--caps]');
   process.exit(1);
 }
 
 // Parse CLI arguments into an options object.
 function parseArgs(argv) {
-  const args = { in: '', out: '', styles: 'styles.tsv' };
+  const args = { in: '', out: '', styles: 'styles.tsv', caps: false };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--in') args.in = argv[++i] || '';
     else if (a === '--out') args.out = argv[++i] || '';
     else if (a === '--styles') args.styles = argv[++i] || '';
+    else if (a.toLowerCase() === '--caps') args.caps = true;
     else usage();
   }
   if (!args.in || !args.out) usage();
@@ -340,9 +341,10 @@ function extractEntriesFromRtf(rtf) {
 }
 
 // Escape text for safe inclusion in RTF output.
-function escapeRtfText(s) {
+function escapeRtfText(s, caps) {
   let out = s.replace(/\[\[B_ON\]\]/g, '__RTF_B_ON__'); // Protect bold-on markers during escaping.
   out = out.replace(/\[\[B_OFF\]\]/g, '__RTF_B_OFF__'); // Protect bold-off markers during escaping.
+  if (caps) out = out.toUpperCase();
   out = out.replace(/([\\{}])/g, '\\$1'); // Escape RTF control chars.
   out = out.replace(/[^\x00-\x7F]/g, ''); // Strip non-ASCII to keep output simple.
   out = out.replace(/[ ]{2,}/g, ' ').trim(); // Normalize whitespace before re-inserting bold.
@@ -376,13 +378,13 @@ function main() {
       const prefix = isLevel2 ? style.level2_prefix : style.level1_prefix;
       const labelSep = isLevel2 ? style.level2_label_sep : style.level1_label_sep;
       const label = isBullet && style.bullet_label ? style.bullet_label : entry.label;
-      const body = escapeRtfText(entry.body);
+      const body = escapeRtfText(entry.body, args.caps);
       if (!body) continue;
       out.push(prefix + label + labelSep + body + '\\par');
       continue;
     }
     const normalPrefix = style.normal_prefix || '\\pard\\s0 ';
-    const body = escapeRtfText(entry.body);
+    const body = escapeRtfText(entry.body, args.caps);
     if (!body) continue;
     out.push(normalPrefix + body + '\\par');
   }
