@@ -379,11 +379,28 @@ function main() {
 
   const out = [];
   for (const hl of headerLines) out.push(hl);
-  for (const entry of entries) {
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i];
     if (entry.type === 'list') {
       const isBullet = entry.listType === 'bullet';
       const isLevel2 = isBullet || /^[a-z]\./i.test(entry.label);
-      const prefix = isLevel2 ? style.level2_prefix : style.level1_prefix;
+      let prefix;
+      if (isLevel2) {
+        // Use a dedicated prefix for the last item in a Level 2 run
+        // to allow spacing only after the final Level 2 paragraph.
+        const next = entries[i + 1];
+        const nextIsLevel2 =
+          next &&
+          next.type === 'list' &&
+          (next.listType === 'bullet' || /^[a-z]\./i.test(next.label));
+        if (!nextIsLevel2 && style.level2_prefix_last) {
+          prefix = style.level2_prefix_last;
+        } else {
+          prefix = style.level2_prefix;
+        }
+      } else {
+        prefix = style.level1_prefix;
+      }
       const labelSep = isLevel2 ? style.level2_label_sep : style.level1_label_sep;
       const label = isBullet && style.bullet_label ? style.bullet_label : entry.label;
       const body = escapeRtfText(entry.body, args.caps);

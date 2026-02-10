@@ -2,13 +2,15 @@ type	name	value
 header_line	1	{\rtf1\ansi\ansicpg1252\deff0
 header_line	2	{\fonttbl{\f0 Roboto;}}
 header_line	3	{\stylesheet
-header_line	4	{\s0\pard\plain\f0\fs24 Normal;}
+header_line	4	{\s0\pard\plain\f0\fs24\sa160 Normal;}
 header_line	5	{\s1\pard\plain\f0\fs24 Level1;}
 header_line	6	\{\s2\pard\plain\f0\fs24 Level2;\}
 header_line	7	}
-header_line	8	\pard\plain\f0\fs24
-style	level1_prefix	\pard\s1\li576\fi-576\tx576\jclisttab 
+header_line	8	\pard\plain\f0\fs24\sa160
+style	normal_prefix	\pard\s0\sa160 
+style	level1_prefix	\pard\s1\sa160\li576\fi-576\tx576\jclisttab 
 style	level1_label_sep	\tab 
 style	level2_prefix	\pard\s2\li1440\fi-576\tx1440\jclisttab 
+style	level2_prefix_last	\pard\s2\sa160\li1440\fi-576\tx1440\jclisttab 
 style	level2_label_sep	\tab 
 style	bullet_label	\f0\u8226?
